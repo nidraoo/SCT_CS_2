@@ -1,0 +1,9 @@
+import numpy as np
+
+def swap_pixels(pixels, key=42): #this is a function which scrambles the pixel positions of an image using a random number generator controlled by a key,  so that later we can reverse it using the same key, it makes it easier for encryption and decryption
+   np.random.seed(key) #it sets the random seed for mumpys random number generator. if this is not  given then the shuffle wouldbe different each time and decryption would be impossible. it makes the same shuffling order happen everytime lets us use the same key to reverse it. it is basically a password that controls the randomness
+   flat=pixels.reshape(-1,3) #it converts the 3D image array into a 2D list of pixels. i.e shape is (height,width,3) where 3 is RGB it reshapes to: (height*width,3) now its a flat list of individual RGB pixels making it easier to shuffle them.
+   indices=np.arrange(len(flat)) #it creates a list of all pixel indices from 0 to the number of pixels in the image. it is needed so that we can shuffle the positions in the next step.
+   np.random.shuffle(indices) #randomly shuffles the pixel positions using the random key(seeded above). the order of the pixel indices gets randomized, it tells us where each pixel goes. this is the encryption key for pixel positions. 
+   shuffled= flat[indices] #rearranges the picels based on the shuffled indices. new pixel = encrypted version.
+   return shuffled.reshape(pixels.shape),indices #reshapes back to original image shape and returns the shuffled pixels along with the indices used for shuffling. the indices are needed for decryption later to know how to reverse the shuffle.
