@@ -1,6 +1,166 @@
-from PIL import Image # PIL is python immaging library which is used to open, process and save the image files.
+import tkinter as tk 
+from tkinter import filedialog, messagebox #filedialog is for 
+from PIL import Image,ImageTk # PIL is python immaging library which is used to open, process and save the image files.
 import numpy as np  #used to manipulate the image pixels data as arrays for encryption and decryption operations.
-from encrypt import swap_pixels, unswap_pixels, xor_encrypt, xor_decrypt
+import os
+from datetime import datetime
+from encrypt import swap_pixels, unswap_pixels, xor_encrypt, xor_decrypt,password_tokeys
+
+class ImageEncryption:
+    def __init__(self,root):
+        self.root =root
+        self.root.title("Image Encrytion Tool")
+        self.root.geometry("950x650")
+        self.root.configure(bg="white")
+        
+        self.image=None
+        self.image_path=None
+        self.encrypted_image=None
+        self.decrypted_image=None
+        self.indices=None
+        
+        self.xor_key= 90
+        self.swap_key=123
+        
+        self.setup_gui()
+        
+    def setup_gui(self):
+        tk.Button(self.root,text="Upload Image",command=self.upload_image,bg='#4CAF50', fg='white',width=20).pack(pady=10)
+
+        self.canvas = tk.Label(self.root,bg='gray')
+        self.canvas.pack(pady=10)
+        
+    
+        self.password_enter= tk.Entry(self.root,show=" ",width=30)
+        self.password_enter.pack(pady=5)
+        self.password_enter.insert(0,"Enter Password")
+        
+        tk.Button(self.root, text='ENCRYPT IMAGE', command=self.encrypt_image, bg='#2196F3', fg='white',width=20).pack(pady=5)
+        tk.Button(self.root,text='DECRYPT IMAGE',command=self.decrypt_image, bg="#FF9800",fg='white',width=20).pack(pady=5)
+        tk.Button(self.root,text='Save Current Image', command=self.save_image, bg='#9C27B0',fg='white',width=20).pack(pady=5)
+        
+        self.history=tk.Text(self.root,height=12,width=110,bg='lightyellow')
+        self.history.pack(pady=10)
+        self.history.insert(tk.END, "[+] Ready! Upload an image and set a password to start.\n")
+        self.display_security_note()
+        
+    def display_security_note(self):
+        self.history.insert(tk.END,"\n[!] NOTE: THIS  TOOL USES PIXEL SHUFFLING AND XOR.\n")
+        self.history.insert(tk.END,"[!]FOR EDUCATIONAL AND DEMO PURPOSES ONLY.\n")
+        
+    def upload_image(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.png")])
+        if file_path:
+            self.image_path=file_path
+            self.image=Image.open(file_path).convert('RGB')
+            self.display_image(self.image)
+            self.history.insert(tk.END,f"[+] Uploaded image: {file_path} \n")
+    
+    def display_image(self,img):
+        img_resize=img.resize((400,400))
+        self.tk_image= ImageTk.PhotoImage(img_resize)
+        self.canvas.config(image=self.tk_image) 
+        
+    def get_keys_frompassword(self):
+        password= self.password_enter.get() 
+        if not password or password=="Enter Password":
+            messagebox.showerror("ERROR!","PLEASE ENTER A VALID PASSWORD.")
+            return None, None
+        xor_key,swap_key=password_tokeys(password)
+        return xor_key,swap_key
+    
+    def encrypt_image(self):
+        if self.image is None:
+            messagebox.showerror("ERROR!","PLEASE UPLAOD AN IMAGE")
+            return 
+        self.xor_key, self.swap_key= self.get_keys_frompassword()
+        if self.xor_key is None:
+            return
+        pixels=np.array(self.image).astype(np.uint8)
+        swapped, self.indices = swap_pixels(pixels, key=self.swap_key)
+        encrypt=xor_encrypt(swapped,key=self.xor_key)
+        self.encrypted_image = Image.fromarray(encrypt)
+        self.display_image(self.encrypted_image)
+        self.history.insert(tk.END,"[+] Image encrypted with password-derived keys.\n")
+        
+    def decrypt_image(self):
+        if self.encrypted_image is None or self.indices is None:
+            messagebox.showerror("ERROR","NO ENCRYPTED IMAGE FOUND!!")
+            return
+        self.xor_key, self.swap_key = self.get_keys_frompassword()
+        if self.xor_key is None:
+            return
+        
+        pixels=np.array(self.encrypted_image).astype(np.uint8)
+        xor_decrypted=xor_decrypt(pixels,key=self.xor_key)
+        unswapped=unswap_pixels(xor_decrypted,self.indices)
+        self.decrypted_image= Image.fromarray(unswapped)
+        self.display_image(self.decrypted_image)  
+        self.history.insert(tk.END,"[+] Image decrypted successfully.\n")
+    
+    def save_image(self):
+        if self.encrypted_image is None and self.decrypted_image is None:
+            messagebox.showerror("ERROR","NO IMAGE TO SAVE")
+            return
+        image_to_save= self.decrypted_image if self.decrypted_image else self.encrypted_image
+        timestamp= datetime.now().strftime("%Y%m%D_%H%M%S")
+        filename=f"saved_image{timestamp}.jpg"
+        image_to_save.save(filename)
+        self.history.insert(tk.END, f"[+] Image saved as {filename}\n")
+        messagebox.showinfo("SAVED",f"Image saved as {{filename}}")
+        
+if __name__=='__main__':
+    root=tk.Tk()
+    app=ImageEncryption(root)
+    root.mainloop()
+    
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''    
+to only run in terminal and check
 
 input_file= "cat.jpg" 
 encrypted_file = "encrypted_image.jpg"
@@ -21,3 +181,4 @@ xor_decrypted = xor_decrypt(xor_encrypted, key=xor_key) #this function reverses 
 unswapped=unswap_pixels(xor_decrypted,indices) #uses  original indices to get the original position to reverse to form it, that is unshuffle the pixels back to their original positions. it reconstructs the original image by undoing the shuffle.
 Image.fromarray(unswapped).save(decrypted_file) #converts the unshuffled pixel arrage to back to an image
 print(f"[+] Image decrypted and saved as {decrypted_file}")
+'''

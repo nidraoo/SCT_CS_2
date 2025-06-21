@@ -1,4 +1,5 @@
 import numpy as np
+import hashlib #hashlib it provides secure hash functions like SHA-256.
 
 def swap_pixels(pixels, key=42): #this is a function which scrambles the pixel positions of an image using a random number generator controlled by a key,  so that later we can reverse it using the same key, it makes it easier for encryption and decryption
    np.random.seed(key) #it sets the random seed for mumpys random number generator. if this is not  given then the shuffle wouldbe different each time and decryption would be impossible. it makes the same shuffling order happen everytime lets us use the same key to reverse it. it is basically a password that controls the randomness
@@ -19,3 +20,9 @@ def xor_encrypt(pixels,key=99): #thisfunction applies a simple XOR bitwise opera
 
 def xor_decrypt(pixels,key=99): #this function reverses the XOR operation by applying the same key again. it is used to decrypt the pixel values after shuffling.
     return pixels ^ key #applies the XOR operation again with the same key to reverse the encryption. it flips the bits back to their original values. this is a simple decryption step that can be reversed by applying the same XOR operation again with the same key.
+
+def password_tokeys(password): #this is a function which converts the string entered to hash
+    hashed= hashlib.sha256(password.encode()).hexdigest() #here  first the password.encode() it converts the string into bytes which is required for hashing, hashlib.sha256() it creates the SHA 256 hash object from the objects, the hexdigest converts the hash to a hexadecimal string
+    xor_key = int(hashed[:4],16) % 256 #it takes the first 4 characters of the hash, converts it to an integer using base 16, and then takes modulo 256 to ensure it is in the range of 0-255. this is used as the key for XOR encryption.
+    swap_key = int(hashed[5:9],16) #4 characters from position 5 to 9  
+    return xor_key,swap_key 
