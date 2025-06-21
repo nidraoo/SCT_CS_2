@@ -18,6 +18,7 @@ class ImageEncryption:
         self.encrypted_image=None
         self.decrypted_image=None
         self.indices=None
+
         
         self.xor_key= 90
         self.swap_key=123
@@ -54,7 +55,7 @@ class ImageEncryption:
         
     def display_security_note(self):
         self.history.insert(tk.END,"\n[!] NOTE: THIS  TOOL USES PIXEL SHUFFLING AND XOR.\n")
-        self.history.insert(tk.END,"[!]FOR EDUCATIONAL AND DEMO PURPOSES ONLY.\n")
+        self.history.insert(tk.END,"[!]FOR EDUCATIONAL AND DEMO PURPOSES ONLY.\n\n")
         
     def upload_image(self):
         file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.png")])
@@ -89,7 +90,10 @@ class ImageEncryption:
         encrypt=xor_encrypt(swapped,key=self.xor_key)
         self.encrypted_image = Image.fromarray(encrypt)
         self.display_image(self.encrypted_image)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        np.save(f"indices_{timestamp}.npy", self.indices)
         self.history.insert(tk.END,"[+] Image encrypted with password-derived keys.\n")
+        
         
     def decrypt_image(self):
         if self.encrypted_image is None or self.indices is None:
@@ -125,7 +129,7 @@ class ImageEncryption:
         self.indices= None
         self.password_enter.delete(0,tk.END)
         self.canvas.config(image='')
-        self.history.insert(tk.END,"[+] Cleared all data and image from memory.\n")
+        self.history.insert(tk.END,"[+] Cleared all data and image from memory.\n") #every image, encrypt and decrypt and indices and password is cleared
             
           
 if __name__=='__main__':
@@ -134,47 +138,6 @@ if __name__=='__main__':
     root.mainloop()
     
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
