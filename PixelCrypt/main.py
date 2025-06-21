@@ -42,7 +42,7 @@ class ImageEncryption:
         self.canvas.pack(pady=10)
         
         tk.Label(self.root,text="Enter password for the key: ",bg='white',font=("Times New Roman",12)).pack()
-        self.password_enter= tk.Entry(self.root,show=" ",width=30)
+        self.password_enter= tk.Entry(self.root,show="",width=30) #this makes the passowrd entry and "" keeps it visible whereas " " would make in invisible
         self.password_enter.pack(pady=5)
         self.password_enter.delete(0,tk.END)
     
