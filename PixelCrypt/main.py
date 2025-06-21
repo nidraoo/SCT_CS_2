@@ -1,8 +1,7 @@
 import tkinter as tk 
-from tkinter import filedialog, messagebox #filedialog is for 
+from tkinter import filedialog, messagebox #filedialog is for opening saving files or directories, askopenfilename, askopenfilenames(multiple files directory open together),askdirectory, asksaveasfilename
 from PIL import Image,ImageTk # PIL is python immaging library which is used to open, process and save the image files.
 import numpy as np  #used to manipulate the image pixels data as arrays for encryption and decryption operations.
-import os
 from datetime import datetime
 from encrypt import swap_pixels, unswap_pixels, xor_encrypt, xor_decrypt,password_tokeys
 
@@ -39,16 +38,16 @@ class ImageEncryption:
         tk.Button(button_frame,text='Save Current Image', command=self.save_image, bg='#9C27B0',fg='white',width=15).pack(side=tk.LEFT,padx=5)
         tk.Button(button_frame,text='Clear',command=self.clear_all,bg="#d51c0e",fg='white',width=15).pack(side=tk.LEFT,padx=5)
 
-        self.canvas = tk.Label(self.root,bg='gray')
+        self.canvas = tk.Label(self.root,bg='gray') #creates a small gray box before any image uploaded,  it is like a placeholder before the image is uploaded
         self.canvas.pack(pady=10)
         
-        tk.Label(self.root,text="Enter password for the key: ",bg='white',font=("Times New Roman",12)).pack()
+        tk.Label(self.root,text="Enter password for the key: ",bg='white',font=("Times New Roman",12)).pack()#entry used as single line to be taken as input
         self.password_enter= tk.Entry(self.root,show="",width=30) #this makes the passowrd entry and "" keeps it visible whereas " " would make in invisible
         self.password_enter.pack(pady=5)
-        self.password_enter.delete(0,tk.END)
+        self.password_enter.delete(0,tk.END) #it starts at the new, not adding to the previous password
     
         tk.Label(self.root,text="HISTORY",bg='white',font=("Times New Roman",12,"bold"),anchor='w').pack(pady=(10,0))
-        self.history=tk.Text(self.root,height=12,width=110,bg='lightyellow')
+        self.history=tk.Text(self.root,height=12,width=110,bg='lightyellow') #creates textbox, by tk.Text it allows multi line input and also scrollbar and all also
         self.history.pack(pady=10)
         self.display_security_note()
         self.history.insert(tk.END, "[+] Ready! Upload an image and set a password to start.\n")
@@ -58,66 +57,64 @@ class ImageEncryption:
         self.history.insert(tk.END,"[!]FOR EDUCATIONAL AND DEMO PURPOSES ONLY.\n\n")
         
     def upload_image(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.png")])
+        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.png")]) #it opens only the files which are .jpg or .png and not documents or anyother, askopenfilenmae gives the whole path of the file choosen
         if file_path:
             self.image_path=file_path
-            self.image=Image.open(file_path).convert('RGB')
+            self.image=Image.open(file_path).convert('RGB') #standardized so that it can convert the grayscale also 
             self.display_image(self.image)
             self.history.insert(tk.END,f"[+] Uploaded image: {file_path} \n")
     
     def display_image(self,img):
-        img_resize=img.resize((400,400))
-        self.tk_image= ImageTk.PhotoImage(img_resize)
-        self.canvas.config(image=self.tk_image) 
+        img_resize=img.resize((400,400)) #resizes to display the image correctly on the page, iirespective of the size of the image in original
+        self.tk_image= ImageTk.PhotoImage(img_resize)#makes the image Tkinter-compatible image so that it could be displayed on the screen
+        self.canvas.config(image=self.tk_image) #image preview area
         
     def get_keys_frompassword(self):
-        password= self.password_enter.get() 
-        if not password or password=="Enter Password":
+        password= self.password_enter.get()  #retrives the password from the entry box 
+        if not password or password=="Enter Password": #validates if it is empty or not then proceeds 
             messagebox.showerror("ERROR!","PLEASE ENTER A VALID PASSWORD.")
-            return None, None
+            return None, None #if no valid key don't proceed, here this is made sure
         xor_key,swap_key=password_tokeys(password)
         return xor_key,swap_key
     
     def encrypt_image(self):
         if self.image is None:
             messagebox.showerror("ERROR!","PLEASE UPLAOD AN IMAGE")
-            return 
-        self.xor_key, self.swap_key= self.get_keys_frompassword()
+            return  #stops the function if no image is uplaoded
+        self.xor_key, self.swap_key= self.get_keys_frompassword() #to derive two keys xor and swap from the password entered
         if self.xor_key is None:
-            return
+            return #stopping the execution if no valid keys
         pixels=np.array(self.image).astype(np.uint8)
-        swapped, self.indices = swap_pixels(pixels, key=self.swap_key)
-        encrypt=xor_encrypt(swapped,key=self.xor_key)
-        self.encrypted_image = Image.fromarray(encrypt)
-        self.display_image(self.encrypted_image)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        np.save(f"indices_{timestamp}.npy", self.indices)
+        swapped, self.indices = swap_pixels(pixels, key=self.swap_key) #swapped pixels
+        encrypt=xor_encrypt(swapped,key=self.xor_key) #encrypted using xor
+        self.encrypted_image = Image.fromarray(encrypt) #made in image form to be displayed
+        self.display_image(self.encrypted_image) #encrypted image displayed
         self.history.insert(tk.END,"[+] Image encrypted with password-derived keys.\n")
         
         
     def decrypt_image(self):
-        if self.encrypted_image is None or self.indices is None:
+        if self.encrypted_image is None or self.indices is None: #checks if encryption done is availble or not, by the image or the indices 
             messagebox.showerror("ERROR","NO ENCRYPTED IMAGE FOUND!!")
-            return
-        self.xor_key, self.swap_key = self.get_keys_frompassword()
+            return #stopping the function if not found
+        self.xor_key, self.swap_key = self.get_keys_frompassword() #again retriving the keys for xor decryption and unshuffling
         if self.xor_key is None:
-            return
+            return #stops the function if keys not found
         
-        pixels=np.array(self.encrypted_image).astype(np.uint8)
-        xor_decrypted=xor_decrypt(pixels,key=self.xor_key)
-        unswapped=unswap_pixels(xor_decrypted,self.indices)
-        self.decrypted_image= Image.fromarray(unswapped)
+        pixels=np.array(self.encrypted_image).astype(np.uint8) #converts the encrypted image to numpy array
+        xor_decrypted=xor_decrypt(pixels,key=self.xor_key) #reverses xor operation to get back pixels to unshuffle
+        unswapped=unswap_pixels(xor_decrypted,self.indices) #pixels are unshuffled here, pixels restored in orginal order
+        self.decrypted_image= Image.fromarray(unswapped) #unshuffled numpy array to image format
         self.display_image(self.decrypted_image)  
         self.history.insert(tk.END,"[+] Image decrypted successfully.\n")
     
     def save_image(self):
-        if self.encrypted_image is None and self.decrypted_image is None:
+        if self.encrypted_image is None and self.decrypted_image is None: #if both encrypted and decrypted image is not there then prints to image to be saved
             messagebox.showerror("ERROR","NO IMAGE TO SAVE")
-            return
-        image_to_save= self.decrypted_image if self.decrypted_image else self.encrypted_image
-        timestamp= datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename=f"saved_image_{timestamp}.jpg"
-        image_to_save.save(filename)
+            return #stops as there is no image to be saved
+        image_to_save= self.decrypted_image if self.decrypted_image else self.encrypted_image #makes sure the most recent image is stored, if no decrypted image is there to save then, encrypted image is stored
+        timestamp= datetime.now().strftime("%Y%m%d_%H%M%S") #Gets the current date and time in a unique format (e.g., 20250622_154530). it helps in storing each file with unique filename
+        filename=f"saved_image_{timestamp}.jpg" #Creates a filename string like: saved_image_20250622_154530.jpg
+        image_to_save.save(filename) #saves the image using the PIL.Image.save() method
         self.history.insert(tk.END, f"[+] Image saved as {filename}\n")
         messagebox.showinfo("SAVED",f"Image saved as {filename}")
         
