@@ -25,24 +25,32 @@ class ImageEncryption:
         self.setup_gui()
         
     def setup_gui(self):
-        tk.Button(self.root,text="Upload Image",command=self.upload_image,bg='#4CAF50', fg='white',width=20).pack(pady=10)
+        heading =tk.Label(self.root,text='IMAGE PIXEL MANIPULATION TOOL',font=('Times New Roman',18,'bold italic'),bg='white',fg='black')
+        heading.pack(pady=5) #this makes the heading title for the page with padding y axis 5
+        
+        button_frame=tk.Frame(self.root,bg='white')
+        button_frame.pack(pady=5) #this is creating frames a row for all the buttons
+        
+        #making buttons of other colors for upload, save, encrypt, decrypt, and clear
+        tk.Button(button_frame,text="Upload Image",command=self.upload_image,bg='#4CAF50', fg='white',width=15).pack(side=tk.LEFT,padx=5)
+        tk.Button(button_frame, text='ENCRYPT IMAGE', command=self.encrypt_image, bg='#2196F3', fg='white',width=15).pack(side=tk.LEFT,padx=5)
+        tk.Button(button_frame,text='DECRYPT IMAGE',command=self.decrypt_image, bg="#FF9800",fg='white',width=15).pack(side=tk.LEFT,padx=5)
+        tk.Button(button_frame,text='Save Current Image', command=self.save_image, bg='#9C27B0',fg='white',width=15).pack(side=tk.LEFT,padx=5)
+        tk.Button(button_frame,text='Clear',command=self.clear_all,bg="#d51c0e",fg='white',width=15).pack(side=tk.LEFT,padx=5)
 
         self.canvas = tk.Label(self.root,bg='gray')
         self.canvas.pack(pady=10)
         
-    
+        tk.Label(self.root,text="Enter password for the key: ",bg='white',font=("Times New Roman",12)).pack()
         self.password_enter= tk.Entry(self.root,show=" ",width=30)
         self.password_enter.pack(pady=5)
-        self.password_enter.insert(0,"Enter Password")
-        
-        tk.Button(self.root, text='ENCRYPT IMAGE', command=self.encrypt_image, bg='#2196F3', fg='white',width=20).pack(pady=5)
-        tk.Button(self.root,text='DECRYPT IMAGE',command=self.decrypt_image, bg="#FF9800",fg='white',width=20).pack(pady=5)
-        tk.Button(self.root,text='Save Current Image', command=self.save_image, bg='#9C27B0',fg='white',width=20).pack(pady=5)
-        
+        self.password_enter.delete(0,tk.END)
+    
+        tk.Label(self.root,text="HISTORY",bg='white',font=("Times New Roman",12,"bold"),anchor='w').pack(pady=(10,0))
         self.history=tk.Text(self.root,height=12,width=110,bg='lightyellow')
         self.history.pack(pady=10)
-        self.history.insert(tk.END, "[+] Ready! Upload an image and set a password to start.\n")
         self.display_security_note()
+        self.history.insert(tk.END, "[+] Ready! Upload an image and set a password to start.\n")
         
     def display_security_note(self):
         self.history.insert(tk.END,"\n[!] NOTE: THIS  TOOL USES PIXEL SHUFFLING AND XOR.\n")
@@ -103,12 +111,23 @@ class ImageEncryption:
             messagebox.showerror("ERROR","NO IMAGE TO SAVE")
             return
         image_to_save= self.decrypted_image if self.decrypted_image else self.encrypted_image
-        timestamp= datetime.now().strftime("%Y%m%D_%H%M%S")
-        filename=f"saved_image{timestamp}.jpg"
+        timestamp= datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename=f"saved_image_{timestamp}.jpg"
         image_to_save.save(filename)
         self.history.insert(tk.END, f"[+] Image saved as {filename}\n")
-        messagebox.showinfo("SAVED",f"Image saved as {{filename}}")
+        messagebox.showinfo("SAVED",f"Image saved as {filename}")
         
+    def clear_all(self):
+        self.image=None
+        self.image_path=None
+        self.encrypted_image= None
+        self.decrypted_image=None
+        self.indices= None
+        self.password_enter.delete(0,tk.END)
+        self.canvas.config(image='')
+        self.history.insert(tk.END,"[+] Cleared all data and image from memory.\n")
+            
+          
 if __name__=='__main__':
     root=tk.Tk()
     app=ImageEncryption(root)
