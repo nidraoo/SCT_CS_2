@@ -43,6 +43,7 @@ A simple image encryption and decryption tool built using Python that demonstrat
 ### Installation
 
 ```bash
-git clone  "https://github.com/nidraoo/SCT_CS_2.git"      
+git clone  "https://github.com/nidraoo/SCT_CS_2.git"
+pip install pillow numpy   
 cd PixelCrypt      
-pip install pillow numpy
+py main.py
